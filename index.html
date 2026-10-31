@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QA TestCraft — Test Case Generator</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50:  '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            },
+            accent: {
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+            }
+          },
+          fontFamily: {
+            sans: ['"Inter"', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          boxShadow: {
+            card: '0 2px 12px 0 rgba(30,64,175,0.07)',
+            modal: '0 8px 40px 0 rgba(30,64,175,0.18)',
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
+
+  <!-- ======= HEADER ======= -->
+  <header class="bg-brand-700 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between gap-4">
+      <!-- Logo + Title -->
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 bg-accent-500 rounded-lg flex items-center justify-center flex-shrink-0">
+          <!-- Bug / checkmark icon -->
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold leading-none tracking-tight">QA TestCraft</h1>
+          <p class="text-brand-200 text-xs font-medium">Test Case Generator</p>
+        </div>
+      </div>
+
+      <!-- Stats bar -->
+      <div class="hidden sm:flex items-center gap-5">
+        <div class="text-center">
+          <div id="stat-total" class="text-2xl font-bold leading-none">0</div>
+          <div class="text-brand-200 text-xs mt-0.5">Total</div>
+        </div>
+        <div class="text-center">
+          <div id="stat-passed" class="text-2xl font-bold leading-none text-green-300">0</div>
+          <div class="text-brand-200 text-xs mt-0.5">Passed</div>
+        </div>
+        <div class="text-center">
+          <div id="stat-failed" class="text-2xl font-bold leading-none text-red-300">0</div>
+          <div class="text-brand-200 text-xs mt-0.5">Failed</div>
+        </div>
+        <div class="text-center">
+          <div id="stat-draft" class="text-2xl font-bold leading-none text-yellow-300">0</div>
+          <div class="text-brand-200 text-xs mt-0.5">Draft</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2">
+        <button id="btn-export-json" title="Export JSON" class="btn-header">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+          <span class="hidden sm:inline text-xs font-semibold">JSON</span>
+        </button>
+        <button id="btn-export-csv" title="Export CSV" class="btn-header">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span class="hidden sm:inline text-xs font-semibold">CSV</span>
+        </button>
+        <button id="btn-new-tc" class="flex items-center gap-2 bg-accent-500 hover:bg-accent-600 text-white rounded-lg px-4 py-2 text-sm font-semibold shadow transition-all duration-150 active:scale-95">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+          New Test Case
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======= MAIN LAYOUT ======= -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- FILTER + SEARCH BAR -->
+    <section class="bg-white rounded-2xl shadow-card p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+      <!-- Search -->
+      <div class="relative flex-1 w-full">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35"/></svg>
+        <input id="search-input" type="search" placeholder="Search by ID or title…" class="w-full pl-9 pr-4 py-2 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-brand-400 transition" />
+      </div>
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-2">
+        <select id="filter-priority" class="filter-select">
+          <option value="">All Priority</option>
+          <option value="Low">Low</option>
+          <option value="Medium">Medium</option>
+          <option value="High">High</option>
+          <option value="Critical">Critical</option>
+        </select>
+        <select id="filter-type" class="filter-select">
+          <option value="">All Types</option>
+          <option value="Functional">Functional</option>
+          <option value="UI/UX">UI/UX</option>
+          <option value="Security">Security</option>
+          <option value="Performance">Performance</option>
+          <option value="Negative Test">Negative Test</option>
+        </select>
+        <select id="filter-status" class="filter-select">
+          <option value="">All Status</option>
+          <option value="Draft">Draft</option>
+          <option value="Ready">Ready</option>
+          <option value="Passed">Passed</option>
+          <option value="Failed">Failed</option>
+        </select>
+        <button id="btn-clear-filters" title="Clear all filters" class="flex items-center gap-1 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-500 text-xs font-medium hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+          Clear
+        </button>
+      </div>
+    </section>
+
+    <!-- TEST CASE LIST -->
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Test Cases <span id="list-count" class="text-brand-500 font-bold">(0)</span></h2>
+        <div class="flex items-center gap-2">
+          <button id="bulk-export-md" title="Export selected as Markdown" class="text-xs text-brand-600 hover:underline hidden">Export MD</button>
+        </div>
+      </div>
+      <!-- Empty state -->
+      <div id="empty-state" class="flex flex-col items-center justify-center py-20 text-slate-400 gap-3">
+        <svg class="w-16 h-16 opacity-30" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <p class="text-base font-medium">No test cases yet</p>
+        <p class="text-sm">Click <strong>+ New Test Case</strong> to get started.</p>
+      </div>
+      <!-- Card grid -->
+      <div id="tc-list" class="grid gap-4 grid-cols-1 md:grid-cols-2 xl:grid-cols-3"></div>
+    </section>
+
+  </main>
+
+  <!-- ======= MODAL: CREATE / EDIT ======= -->
+  <div id="modal-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-start justify-center p-4 sm:p-8 overflow-y-auto">
+    <div id="modal-box" class="bg-white rounded-2xl shadow-modal w-full max-w-2xl my-auto">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div>
+          <h2 id="modal-title" class="text-lg font-bold text-slate-800">New Test Case</h2>
+          <p id="modal-id-preview" class="text-xs text-brand-500 font-mono mt-0.5"></p>
+        </div>
+        <button id="modal-close" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Modal Body / Form -->
+      <form id="tc-form" class="px-6 py-5 space-y-4" novalidate>
+        <input type="hidden" id="form-id" />
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Module -->
+          <div>
+            <label class="form-label" for="form-module">Module / Feature <span class="text-red-400">*</span></label>
+            <input id="form-module" type="text" class="form-input" placeholder="e.g. User Authentication" required />
+          </div>
+          <!-- Title -->
+          <div>
+            <label class="form-label" for="form-title">Test Case Title <span class="text-red-400">*</span></label>
+            <input id="form-title" type="text" class="form-input" placeholder="e.g. Login with valid credentials" required />
+          </div>
+        </div>
+
+        <!-- Pre-conditions -->
+        <div>
+          <label class="form-label" for="form-preconditions">Pre-conditions</label>
+          <textarea id="form-preconditions" rows="2" class="form-input resize-none" placeholder="e.g. User account exists. App is running."></textarea>
+        </div>
+
+        <!-- Test Steps (dynamic) -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="form-label mb-0">Test Steps <span class="text-red-400">*</span></label>
+            <button type="button" id="btn-add-step" class="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-800 font-semibold transition">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+              Add Step
+            </button>
+          </div>
+          <div id="steps-container" class="space-y-2"></div>
+        </div>
+
+        <!-- Test Data -->
+        <div>
+          <label class="form-label" for="form-testdata">Test Data / Input</label>
+          <textarea id="form-testdata" rows="2" class="form-input resize-none font-mono text-xs" placeholder="username: admin&#10;password: Admin@123"></textarea>
+        </div>
+
+        <!-- Expected Result -->
+        <div>
+          <label class="form-label" for="form-expected">Expected Result <span class="text-red-400">*</span></label>
+          <textarea id="form-expected" rows="2" class="form-input resize-none" placeholder="e.g. User is redirected to dashboard."></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <!-- Severity -->
+          <div>
+            <label class="form-label" for="form-severity">Severity</label>
+            <select id="form-severity" class="form-input">
+              <option>Low</option>
+              <option selected>Medium</option>
+              <option>High</option>
+              <option>Critical</option>
+            </select>
+          </div>
+          <!-- Priority -->
+          <div>
+            <label class="form-label" for="form-priority">Priority</label>
+            <select id="form-priority" class="form-input">
+              <option>Low</option>
+              <option selected>Medium</option>
+              <option>High</option>
+              <option>Critical</option>
+            </select>
+          </div>
+          <!-- Type -->
+          <div>
+            <label class="form-label" for="form-type">Test Type</label>
+            <select id="form-type" class="form-input">
+              <option>Functional</option>
+              <option>UI/UX</option>
+              <option>Security</option>
+              <option>Performance</option>
+              <option>Negative Test</option>
+            </select>
+          </div>
+          <!-- Status -->
+          <div>
+            <label class="form-label" for="form-status">Status</label>
+            <select id="form-status" class="form-input">
+              <option>Draft</option>
+              <option>Ready</option>
+              <option>Passed</option>
+              <option>Failed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-end gap-3 pt-2 border-t border-slate-100">
+          <button type="button" id="btn-cancel-modal" class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:bg-slate-100 transition">Cancel</button>
+          <button type="submit" id="btn-save-tc" class="px-6 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow transition-all duration-150 active:scale-95">Save Test Case</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ======= MODAL: EXPORT / COPY ======= -->
+  <div id="export-modal-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-modal w-full max-w-xl">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <h2 class="text-base font-bold text-slate-800">Export / Copy Test Case</h2>
+        <button id="export-modal-close" class="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="px-6 py-4 space-y-4">
+        <div class="flex gap-2">
+          <button id="fmt-markdown" class="fmt-btn active-fmt">Markdown Table</button>
+          <button id="fmt-gherkin" class="fmt-btn">Gherkin (BDD)</button>
+        </div>
+        <pre id="export-preview" class="bg-slate-900 text-green-300 rounded-xl p-4 text-xs font-mono overflow-x-auto max-h-64 overflow-y-auto whitespace-pre-wrap"></pre>
+        <div class="flex items-center justify-end gap-3">
+          <button id="btn-copy-export" class="flex items-center gap-2 px-4 py-2 rounded-lg bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold shadow transition active:scale-95">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path stroke-linecap="round" stroke-linejoin="round" d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            Copy to Clipboard
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= TOAST NOTIFICATION ======= -->
+  <div id="toast" class="fixed bottom-6 right-6 z-[60] flex items-center gap-3 bg-slate-800 text-white px-4 py-3 rounded-xl shadow-lg text-sm font-medium opacity-0 translate-y-4 pointer-events-none transition-all duration-300 max-w-xs">
+    <svg id="toast-icon" class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"></svg>
+    <span id="toast-msg"></span>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
